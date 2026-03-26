@@ -1,0 +1,814 @@
+// LETSPACE - Kenya Real Estate SaaS
+// ISO-grade multi-tenant data model
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTH & MULTI-TENANCY
+// ─────────────────────────────────────────────
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  logo            String?
+  website         String?
+  phone           String?
+  email           String?
+  address         String?
+  county          String?
+  city            String?
+  kraPin          String?
+  agencyLicense   String?
+  subscriptionPlan SubscriptionPlan @default(FREE)
+  subscriptionStatus SubscriptionStatus @default(ACTIVE)
+  subscriptionEndsAt DateTime?
+  mpesaShortcode  String?
+  mpesaPasskey    String?
+  stripeCustomerId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           OrganizationUser[]
+  properties      Property[]
+  tenants         Tenant[]
+  leases          Lease[]
+  invoices        Invoice[]
+  maintenanceRequests MaintenanceRequest[]
+  leads           Lead[]
+  documents       Document[]
+  subscriptions   Subscription[]
+  notifications   Notification[]
+  aiUsage         AIUsage[]
+
+  @@map("organizations")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String?
+  email           String   @unique
+  emailVerified   DateTime?
+  phone           String?
+  image           String?
+  passwordHash    String?
+  role            GlobalRole @default(USER)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organizations   OrganizationUser[]
+  accounts        Account[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model OrganizationUser {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  role            OrgRole  @default(AGENT)
+  permissions     String[] @default([])
+  isActive        Boolean  @default(true)
+  invitedAt       DateTime?
+  joinedAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────────
+// PROPERTY MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Property {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  slug            String
+  type            PropertyType
+  category        PropertyCategory
+  status          PropertyStatus @default(ACTIVE)
+  description     String?
+  aiDescription   String?
+  address         String
+  city            String
+  county          String
+  country         String   @default("Kenya")
+  latitude        Float?
+  longitude       Float?
+  landReference   String?
+  titleDeedNumber String?
+  yearBuilt       Int?
+  totalUnits      Int      @default(1)
+  managementFee   Float?
+  serviceCharge   Float?
+  images          String[] @default([])
+  amenities       String[] @default([])
+  nearbyFacilities String[] @default([])
+  isPublished     Boolean  @default(false)
+  isFeatured      Boolean  @default(false)
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  units           Unit[]
+  maintenanceRequests MaintenanceRequest[]
+  leads           Lead[]
+
+  @@unique([organizationId, slug])
+  @@map("properties")
+}
+
+model Unit {
+  id              String   @id @default(cuid())
+  propertyId      String
+  unitNumber      String
+  floor           Int?
+  type            UnitType
+  status          UnitStatus @default(VACANT)
+  bedrooms        Int      @default(0)
+  bathrooms       Int      @default(0)
+  size            Float?
+  rentAmount      Float
+  depositAmount   Float
+  serviceCharge   Float    @default(0)
+  description     String?
+  images          String[] @default([])
+  amenities       String[] @default([])
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  leases          Lease[]
+  maintenanceRequests MaintenanceRequest[]
+  invoices        Invoice[]
+
+  @@unique([propertyId, unitNumber])
+  @@map("units")
+}
+
+// ─────────────────────────────────────────────
+// TENANT MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Tenant {
+  id              String   @id @default(cuid())
+  organizationId  String
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String
+  nationalId      String?
+  kraPin          String?
+  employer        String?
+  employerPhone   String?
+  monthlyIncome   Float?
+  emergencyName   String?
+  emergencyPhone  String?
+  emergencyRelation String?
+  notes           String?
+  creditScore     Int?
+  riskLevel       RiskLevel @default(MEDIUM)
+  status          TenantStatus @default(ACTIVE)
+  idDocumentUrl   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leases          Lease[]
+  invoices        Invoice[]
+  applications    TenantApplication[]
+  documents       Document[]
+
+  @@map("tenants")
+}
+
+model TenantApplication {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  propertyId      String?
+  unitId          String?
+  organizationId  String?
+  firstName       String
+  lastName        String
+  email           String
+  phone           String
+  nationalId      String?
+  employer        String?
+  monthlyIncome   Float?
+  message         String?
+  status          ApplicationStatus @default(PENDING)
+  aiScore         Float?
+  aiAnalysis      String?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@map("tenant_applications")
+}
+
+// ─────────────────────────────────────────────
+// LEASE MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Lease {
+  id              String   @id @default(cuid())
+  organizationId  String
+  tenantId        String
+  unitId          String
+  leaseNumber     String   @unique
+  startDate       DateTime
+  endDate         DateTime
+  rentAmount      Float
+  depositAmount   Float
+  depositPaid     Float    @default(0)
+  serviceCharge   Float    @default(0)
+  paymentDueDay   Int      @default(1)
+  gracePeriodDays Int      @default(5)
+  status          LeaseStatus @default(ACTIVE)
+  terminationDate DateTime?
+  terminationReason String?
+  autoRenew       Boolean  @default(false)
+  escalationRate  Float?
+  documentUrl     String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  unit            Unit     @relation(fields: [unitId], references: [id])
+  invoices        Invoice[]
+
+  @@map("leases")
+}
+
+// ─────────────────────────────────────────────
+// FINANCIAL MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Invoice {
+  id              String   @id @default(cuid())
+  organizationId  String
+  leaseId         String?
+  tenantId        String
+  unitId          String?
+  invoiceNumber   String   @unique
+  type            InvoiceType @default(RENT)
+  amount          Float
+  vatAmount       Float    @default(0)
+  totalAmount     Float
+  paidAmount      Float    @default(0)
+  balanceAmount   Float
+  currency        String   @default("KES")
+  dueDate         DateTime
+  paidDate        DateTime?
+  status          InvoiceStatus @default(PENDING)
+  description     String?
+  notes           String?
+  receiptUrl      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  lease           Lease?   @relation(fields: [leaseId], references: [id])
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  unit            Unit?    @relation(fields: [unitId], references: [id])
+  payments        Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  amount          Float
+  currency        String   @default("KES")
+  method          PaymentMethod
+  reference       String?
+  mpesaReceiptNumber String?
+  mpesaPhone      String?
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  organizationId  String
+  propertyId      String?
+  unitId          String?
+  category        ExpenseCategory
+  amount          Float
+  currency        String   @default("KES")
+  description     String
+  vendor          String?
+  receiptUrl      String?
+  date            DateTime
+  isRecurring     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("expenses")
+}
+
+// ─────────────────────────────────────────────
+// MAINTENANCE MANAGEMENT
+// ─────────────────────────────────────────────
+
+model MaintenanceRequest {
+  id              String   @id @default(cuid())
+  organizationId  String
+  propertyId      String
+  unitId          String?
+  tenantId        String?
+  ticketNumber    String   @unique
+  title           String
+  description     String
+  category        MaintenanceCategory
+  priority        Priority @default(MEDIUM)
+  status          MaintenanceStatus @default(OPEN)
+  assignedTo      String?
+  assignedVendorId String?
+  estimatedCost   Float?
+  actualCost      Float?
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  images          String[] @default([])
+  notes           String?
+  aiPriority      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  property        Property @relation(fields: [propertyId], references: [id])
+  unit            Unit?    @relation(fields: [unitId], references: [id])
+  vendor          Vendor?  @relation(fields: [assignedVendorId], references: [id])
+
+  @@map("maintenance_requests")
+}
+
+model Vendor {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  email           String?
+  phone           String
+  category        String[]
+  rating          Float    @default(0)
+  totalJobs       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  maintenanceRequests MaintenanceRequest[]
+
+  @@map("vendors")
+}
+
+// ─────────────────────────────────────────────
+// MARKETING & LEADS
+// ─────────────────────────────────────────────
+
+model Lead {
+  id              String   @id @default(cuid())
+  organizationId  String
+  propertyId      String?
+  name            String
+  email           String?
+  phone           String
+  source          LeadSource @default(WEBSITE)
+  status          LeadStatus @default(NEW)
+  message         String?
+  budget          Float?
+  preferredAreas  String[] @default([])
+  followUpDate    DateTime?
+  assignedTo      String?
+  notes           String?
+  aiScore         Float?
+  convertedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  property        Property? @relation(fields: [propertyId], references: [id])
+
+  @@map("leads")
+}
+
+// ─────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────
+
+model Document {
+  id              String   @id @default(cuid())
+  organizationId  String
+  tenantId        String?
+  name            String
+  type            DocumentType
+  url             String
+  size            Int?
+  mimeType        String?
+  aiSummary       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+
+  @@map("documents")
+}
+
+// ─────────────────────────────────────────────
+// SUBSCRIPTIONS & BILLING
+// ─────────────────────────────────────────────
+
+model Subscription {
+  id              String   @id @default(cuid())
+  organizationId  String
+  plan            SubscriptionPlan
+  status          SubscriptionStatus
+  amount          Float
+  currency        String   @default("KES")
+  billingCycle    BillingCycle @default(MONTHLY)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  stripeSubscriptionId String?
+  mpesaReference  String?
+  cancelledAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String?
+  title           String
+  message         String
+  type            NotificationType
+  channel         NotificationChannel @default(IN_APP)
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// AI USAGE TRACKING
+// ─────────────────────────────────────────────
+
+model AIUsage {
+  id              String   @id @default(cuid())
+  organizationId  String
+  feature         String
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  cost            Float    @default(0)
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("ai_usage")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  userId          String?
+  organizationId  String?
+  action          String
+  resource        String
+  resourceId      String?
+  oldValues       Json?
+  newValues       Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+
+  user            User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum GlobalRole {
+  SUPER_ADMIN
+  USER
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MANAGER
+  AGENT
+  ACCOUNTANT
+  VIEWER
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIALING
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  MIXED_USE
+  LAND
+}
+
+enum PropertyCategory {
+  APARTMENT
+  HOUSE
+  VILLA
+  BEDSITTER
+  STUDIO
+  TOWNHOUSE
+  MAISONETTE
+  BUNGALOW
+  OFFICE
+  RETAIL
+  WAREHOUSE
+  LAND
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  UNDER_RENOVATION
+  SOLD
+}
+
+enum UnitType {
+  BEDSITTER
+  ONE_BEDROOM
+  TWO_BEDROOM
+  THREE_BEDROOM
+  FOUR_BEDROOM
+  STUDIO
+  PENTHOUSE
+  SHOP
+  OFFICE
+  WAREHOUSE
+}
+
+enum UnitStatus {
+  VACANT
+  OCCUPIED
+  RESERVED
+  UNDER_MAINTENANCE
+  INACTIVE
+}
+
+enum TenantStatus {
+  ACTIVE
+  FORMER
+  BLACKLISTED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum LeaseStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  RENEWED
+}
+
+enum InvoiceType {
+  RENT
+  DEPOSIT
+  SERVICE_CHARGE
+  MAINTENANCE
+  PENALTY
+  OTHER
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MPESA
+  BANK_TRANSFER
+  CASH
+  CHEQUE
+  CARD
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ExpenseCategory {
+  MAINTENANCE
+  UTILITIES
+  INSURANCE
+  TAX
+  MANAGEMENT
+  LEGAL
+  MARKETING
+  RENOVATION
+  CLEANING
+  SECURITY
+  OTHER
+}
+
+enum MaintenanceCategory {
+  PLUMBING
+  ELECTRICAL
+  STRUCTURAL
+  HVAC
+  PAINTING
+  CLEANING
+  SECURITY
+  LANDSCAPING
+  APPLIANCES
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MaintenanceStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  PHONE
+  EMAIL
+  WALK_IN
+  PORTAL
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  VIEWING_SCHEDULED
+  OFFER_MADE
+  WON
+  LOST
+}
+
+enum DocumentType {
+  LEASE_AGREEMENT
+  ID_COPY
+  KRA_PIN
+  PAYSLIP
+  BANK_STATEMENT
+  TITLE_DEED
+  RECEIPT
+  NOTICE
+  OTHER
+}
+
+enum NotificationType {
+  RENT_DUE
+  PAYMENT_RECEIVED
+  LEASE_EXPIRY
+  MAINTENANCE_UPDATE
+  NEW_LEAD
+  APPLICATION_STATUS
+  SYSTEM
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
