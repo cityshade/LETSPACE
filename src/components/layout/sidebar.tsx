@@ -38,6 +38,7 @@ const navItems = [
       { title: "Invoices", href: "/dashboard/financials/invoices" },
       { title: "Payments", href: "/dashboard/financials/payments" },
       { title: "Expenses", href: "/dashboard/financials/expenses" },
+      { title: "Reconciliation", href: "/dashboard/financials/reconciliation" },
     ],
   },
   {

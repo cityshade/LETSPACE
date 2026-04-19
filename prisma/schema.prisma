@@ -31,7 +31,13 @@ model Organization {
   subscriptionEndsAt DateTime?
   mpesaShortcode  String?
   mpesaPasskey    String?
-  stripeCustomerId String?
+  paystackSubaccountCode String?
+  platformFeeRate Float    @default(2.5)
+  platformFeeMin  Float    @default(50)
+  platformFeeMax  Float    @default(500)
+  payoutBankCode  String?
+  payoutAccountNumber String?
+  payoutAccountName   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -46,6 +52,7 @@ model Organization {
   subscriptions   Subscription[]
   notifications   Notification[]
   aiUsage         AIUsage[]
+  reconciliations Reconciliation[]
 
   @@map("organizations")
 }
@@ -346,15 +353,44 @@ model Payment {
   reference       String?
   mpesaReceiptNumber String?
   mpesaPhone      String?
+  paystackRef     String?
+  platformFee     Float    @default(0)
+  landlordAmount  Float    @default(0)
+  feeRate         Float    @default(0)
+  isReconciled    Boolean  @default(false)
+  reconciledAt    DateTime?
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id])
+  reconciliation  Reconciliation?
 
   @@map("payments")
+}
+
+model Reconciliation {
+  id              String   @id @default(cuid())
+  organizationId  String
+  paymentId       String   @unique
+  invoiceId       String
+  tenantName      String
+  propertyUnit    String
+  totalAmount     Float
+  platformFee     Float
+  landlordAmount  Float
+  feeRate         Float
+  status          ReconciliationStatus @default(COMPLETED)
+  paystackRef     String?
+  processedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  payment         Payment      @relation(fields: [paymentId], references: [id])
+
+  @@map("reconciliations")
 }
 
 model Expense {
@@ -810,4 +846,10 @@ enum NotificationChannel {
   EMAIL
   SMS
   PUSH
+}
+
+enum ReconciliationStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
