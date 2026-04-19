@@ -12,7 +12,7 @@ const settingsSections = [
   { id: "billing", label: "Billing & Plan", icon: CreditCard, desc: "Subscription and payments" },
   { id: "team", label: "Team Members", icon: Users, desc: "Manage roles and access" },
   { id: "notifications", label: "Notifications", icon: Bell, desc: "SMS, email, and alerts" },
-  { id: "integrations", label: "Integrations", icon: Webhook, desc: "M-Pesa, Stripe, and APIs" },
+  { id: "integrations", label: "Integrations", icon: Webhook, desc: "M-Pesa, Paystack, and APIs" },
   { id: "security", label: "Security", icon: Shield, desc: "Authentication and audit logs" },
   { id: "api", label: "API Keys", icon: Key, desc: "Developer access" },
 ];
@@ -108,7 +108,7 @@ export default function SettingsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <Badge className="bg-white/20 text-white border-0 mb-2">PROFESSIONAL Plan</Badge>
-                      <p className="text-2xl font-bold">KES 9,999/month</p>
+                      <p className="text-2xl font-bold">KES 10,000/month</p>
                       <p className="text-blue-100 text-sm mt-1">Next billing: April 1, 2026</p>
                     </div>
                     <Button variant="outline" className="border-white text-white hover:bg-white/10">
@@ -167,9 +167,9 @@ export default function SettingsPage() {
                     logo: "📱",
                   },
                   {
-                    name: "Stripe",
-                    desc: "International card payments for non-M-Pesa tenants",
-                    status: "disconnected",
+                    name: "Paystack",
+                    desc: "Card payments for non-M-Pesa tenants",
+                    status: "connected",
                     logo: "💳",
                   },
                   {

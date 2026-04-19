@@ -125,7 +125,7 @@ export const PLAN_LIMITS = {
 
 export const PLAN_PRICES = {
   FREE: { monthly: 0, annually: 0 },
-  STARTER: { monthly: 2999, annually: 29990 },
-  PROFESSIONAL: { monthly: 9999, annually: 99990 },
-  ENTERPRISE: { monthly: 29999, annually: 299990 },
+  STARTER: { monthly: 3000, annually: 30000 },
+  PROFESSIONAL: { monthly: 10000, annually: 100000 },
+  ENTERPRISE: { monthly: 30000, annually: 300000 },
 };

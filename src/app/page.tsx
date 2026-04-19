@@ -89,7 +89,7 @@ const plans = [
   },
   {
     name: "STARTER",
-    price: { monthly: 2999 },
+    price: { monthly: 3000 },
     desc: "For growing landlords",
     features: [
       "5 properties, up to 50 units",
@@ -105,7 +105,7 @@ const plans = [
   },
   {
     name: "PROFESSIONAL",
-    price: { monthly: 9999 },
+    price: { monthly: 10000 },
     desc: "For property managers & agencies",
     features: [
       "25 properties, up to 500 units",
@@ -123,7 +123,7 @@ const plans = [
   },
   {
     name: "ENTERPRISE",
-    price: { monthly: 29999 },
+    price: { monthly: 30000 },
     desc: "For large property companies",
     features: [
       "Unlimited properties & units",
