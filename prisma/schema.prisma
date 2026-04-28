@@ -413,6 +413,207 @@ model Expense {
 }
 
 // ─────────────────────────────────────────────
+// IMMUTABLE LEDGER (Pillar 3 — Bank-Grade Records)
+// Append-only. Never UPDATE. Never DELETE.
+// Each entry carries a SHA-256 hash that chains
+// to the previous entry for tamper detection.
+// ─────────────────────────────────────────────
+
+model LedgerEntry {
+  id              String          @id @default(cuid())
+  organizationId  String
+  propertyId      String?
+  unitId          String?
+  tenantId        String?
+  leaseId         String?
+  paymentId       String?
+
+  type            LedgerEntryType
+  component       WaterfallComponent?  // which debt bucket this applies to
+  direction       LedgerDirection      // DEBIT (charge) or CREDIT (payment/waiver)
+
+  amount          Float                // always positive
+  runningBalance  Float                // tenant balance after this entry (positive = owes)
+
+  description     String
+  reference       String?              // Paystack ref, SMS id, etc.
+
+  // Revenue split — recorded at entry creation, immutable
+  platformShare   Float           @default(0)
+  agentShare      Float           @default(0)
+  landlordShare   Float           @default(0)
+
+  // Penalty metadata
+  penaltyDay      Int?            // day-of-month late fee was assessed
+  gracePeriodDays Int?
+
+  // SHA-256 chain — previous entry's hash + this entry's data
+  entryHash       String          // SHA-256(previousHash + id + amount + type + createdAt)
+  previousHash    String?         // null for first entry per tenancy
+
+  // Waiver / forfeiture tracking
+  isWaived        Boolean         @default(false)
+  waivedBy        String?
+  waivedAt        DateTime?
+  waiverReason    String?
+
+  createdAt       DateTime        @default(now())
+  // NO updatedAt — immutable
+
+  @@index([organizationId, tenantId, createdAt])
+  @@index([leaseId, createdAt])
+  @@index([paymentId])
+  @@map("ledger_entries")
+}
+
+// ─────────────────────────────────────────────
+// PROPERTY CONFIGURATION (per-property rules)
+// ─────────────────────────────────────────────
+
+model PropertyConfig {
+  id              String   @id @default(cuid())
+  propertyId      String   @unique
+  organizationId  String
+
+  // Late fee rules
+  lateFeeEnabled        Boolean  @default(true)
+  lateFeeDueDay         Int      @default(10)
+  lateFeeGraceDays      Int      @default(0)
+  lateFeeType           LateFeeType @default(FIXED_PER_DAY)
+  lateFeeAmount         Float    @default(500)     // KES/day or % or one-time
+  lateFeeCapEnabled     Boolean  @default(false)
+  lateFeeCapType        FeeCapType @default(AMOUNT)
+  lateFeeCapValue       Float    @default(10000)
+  lateFeeAgentSplit     Float    @default(50)      // % of penalty to agent
+  lateFeeLandlordSplit  Float    @default(50)      // % of penalty to landlord
+
+  // Deposit rules
+  depositDepletionEnabled   Boolean @default(true)
+  depositDepletionDay       Int     @default(16)
+  depositDepletionMaxPct    Float   @default(100)  // max % of deposit to use
+  depositTopUpDays          Int     @default(30)   // days to top up after depletion
+
+  // Payment waterfall order (serialised as enum array)
+  waterfallOrder    WaterfallComponent[] @default([PENALTY, GARBAGE, WATER, SERVICE_CHARGE, RENT])
+
+  // Notification cadence — which days to send SMS (day of month)
+  smsReminderDays   Int[]   @default([3, 5, 10, 11, 12, 13, 14, 15, 16])
+  smsEnabled        Boolean @default(true)
+
+  // Water billing
+  waterRatePerUnit  Float   @default(80)   // KES per cubic metre
+  waterFixedCharge  Float   @default(200)  // monthly fixed standing charge
+
+  // Agent commission (overrides org default when set)
+  agentCommissionPct Float?  // null = use org default
+
+  // Referral discounts
+  referralEnabled   Boolean @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("property_configs")
+}
+
+// ─────────────────────────────────────────────
+// AGENT COMMISSION LEDGER (Pillar 4 — Max Revenue)
+// ─────────────────────────────────────────────
+
+model AgentCommission {
+  id              String   @id @default(cuid())
+  organizationId  String
+  agentUserId     String
+  landlordOrgId   String
+  propertyId      String?
+  unitId          String?
+  leaseId         String?
+  ledgerEntryId   String?  // source ledger entry
+
+  commissionType  CommissionType
+  grossAmount     Float           // the rent/fee amount this commission derives from
+  commissionPct   Float
+  commissionAmount Float
+
+  status          CommissionStatus @default(PENDING)
+  settledAt       DateTime?
+  settlementRef   String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([agentUserId, status])
+  @@index([organizationId, createdAt])
+  @@map("agent_commissions")
+}
+
+// ─────────────────────────────────────────────
+// REFERRAL SYSTEM (Pillar 4 — Max Revenue)
+// ─────────────────────────────────────────────
+
+model ReferralCode {
+  id              String   @id @default(cuid())
+  organizationId  String
+  tenantId        String   @unique
+  unitId          String
+  code            String   @unique  // e.g. MARY-W-4B
+
+  timesUsed       Int      @default(0)
+  discountTier    Int      @default(0)  // 0=no referrals yet, 1=5%, 2=10%, ...
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  conversions     ReferralConversion[]
+
+  @@map("referral_codes")
+}
+
+model ReferralConversion {
+  id              String   @id @default(cuid())
+  referralCodeId  String
+  referredTenantId String
+  referredLeaseId  String?
+
+  discountPct     Float    // % discount earned by referrer
+  discountAmount  Float    // KES discount applied to referrer's next invoice
+  appliedToInvoiceId String?
+  appliedAt       DateTime?
+
+  status          ReferralStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+
+  referralCode    ReferralCode @relation(fields: [referralCodeId], references: [id])
+
+  @@map("referral_conversions")
+}
+
+// ─────────────────────────────────────────────
+// SMS LOG (Pillar 2 — Paperless Automation)
+// ─────────────────────────────────────────────
+
+model SmsLog {
+  id              String   @id @default(cuid())
+  organizationId  String?
+  tenantId        String?
+  phone           String
+  message         String
+  provider        SmsProvider @default(AFRICAS_TALKING)
+  templateId      String?
+  status          SmsStatus  @default(QUEUED)
+  externalId      String?   // provider's message ID
+  failureReason   String?
+  retryCount      Int       @default(0)
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([status, createdAt])
+  @@map("sms_logs")
+}
+
+// ─────────────────────────────────────────────
 // MAINTENANCE MANAGEMENT
 // ─────────────────────────────────────────────
 
@@ -852,4 +1053,90 @@ enum ReconciliationStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+// ─── Moat Enums ───────────────────────────────────────────────────────────────
+
+enum LedgerEntryType {
+  // Charges (DEBIT — increases what tenant owes)
+  RENT_CHARGE
+  LATE_PENALTY
+  WATER_CHARGE
+  SERVICE_CHARGE
+  GARBAGE_CHARGE
+  DEPOSIT_CHARGE      // initial deposit invoice
+  LEGAL_CHARGE
+
+  // Credits (CREDIT — reduces what tenant owes)
+  RENT_PAYMENT
+  LATE_PENALTY_PAYMENT
+  WATER_PAYMENT
+  SERVICE_CHARGE_PAYMENT
+  GARBAGE_PAYMENT
+  DEPOSIT_PAYMENT
+
+  // Administrative credits (no cash received)
+  DEPOSIT_DEPLETION   // deposit used to cover arrears
+  PENALTY_WAIVER      // landlord/agent waived a penalty
+  PENALTY_FORFEITURE  // penalty forfeit (reallocated)
+  DEPOSIT_REFUND      // refund on move-out
+  RENT_CREDIT         // referral discount or adjustment
+  WRITE_OFF
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum WaterfallComponent {
+  PENALTY
+  GARBAGE
+  WATER
+  SERVICE_CHARGE
+  RENT
+  DEPOSIT
+}
+
+enum LateFeeType {
+  FIXED_PER_DAY
+  PERCENTAGE_ONCE      // % of monthly rent, one-time on first late day
+  PERCENTAGE_PER_DAY
+  COMPOUND
+}
+
+enum FeeCapType {
+  AMOUNT
+  PERCENTAGE
+}
+
+enum CommissionType {
+  RENT_COMMISSION
+  LATE_FEE_SHARE
+  REFERRAL_BONUS
+}
+
+enum CommissionStatus {
+  PENDING
+  SETTLED
+  CANCELLED
+}
+
+enum ReferralStatus {
+  PENDING     // referred tenant not yet on first paid rent
+  EARNED      // discount applied to referrer's invoice
+  EXPIRED
+}
+
+enum SmsProvider {
+  AFRICAS_TALKING
+  SOZURI
+}
+
+enum SmsStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  OPTED_OUT
 }
