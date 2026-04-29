@@ -20,7 +20,7 @@ const priorityConfig: Record<string, { variant: string; label: string }> = {
   LOW: { variant: "info", label: "Low" },
   MEDIUM: { variant: "warning", label: "Medium" },
   HIGH: { variant: "destructive", label: "High" },
-  URGENT: { variant: "destructive", label: "🚨 Urgent" },
+  URGENT: { variant: "destructive", label: "Urgent" },
 };
 
 const statusConfig: Record<string, { variant: string; icon: typeof Wrench }> = {
@@ -66,7 +66,7 @@ export default function MaintenancePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Open", value: open, color: "text-yellow-700", bg: "bg-yellow-50 border-yellow-200" },
           { label: "In Progress", value: inProgress, color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },

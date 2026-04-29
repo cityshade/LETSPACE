@@ -53,7 +53,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Leads", value: mockLeads.length, color: "text-blue-700" },
           { label: "Active Pipeline", value: active, color: "text-yellow-700" },

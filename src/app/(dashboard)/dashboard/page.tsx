@@ -68,45 +68,42 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Good morning, John 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Good morning, John</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {formatDate(new Date())} · Here&apos;s your portfolio overview
           </p>
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/properties/new">
-            <Button size="sm">
+            <Button size="sm" className="hidden sm:flex">
               <Home className="h-4 w-4" />
               Add Property
             </Button>
           </Link>
           <Link href="/dashboard/ai">
             <Button variant="outline" size="sm">
-              <Sparkles className="h-4 w-4 text-purple-500" />
-              AI Insights
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">AI Insights</span>
             </Button>
           </Link>
         </div>
       </div>
 
       {/* AI Insight Banner */}
-      <div className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
+      <div className="rounded-xl border border-soil-200 bg-soil-50 p-4">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-white/20 p-2">
-            <Sparkles className="h-4 w-4" />
+          <div className="rounded-lg bg-soil-100 p-2 shrink-0">
+            <Sparkles className="h-4 w-4 text-soil-600" />
           </div>
-          <div className="flex-1">
-            <p className="font-semibold text-sm">Claude AI Insight</p>
-            <p className="text-xs text-blue-100 mt-1">
-              Your occupancy rate improved 4% this month. 3 leases expire in the next 30 days —
-              consider initiating renewal conversations now to maintain your 89% occupancy.
-              Overdue collections totaling KES {formatCurrency(stats.pendingRent)} require attention.
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-soil-900">AI Insight</p>
+            <p className="text-xs text-soil-700 mt-0.5">
+              Occupancy up 4% this month. 3 leases expire in 30 days — start renewal conversations now.
+              Overdue collections of KES {formatCurrency(stats.pendingRent)} require attention.
             </p>
           </div>
-          <Link href="/dashboard/ai">
-            <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0">
-              Ask Claude
-            </Button>
+          <Link href="/dashboard/ai" className="shrink-0">
+            <Button size="sm" variant="outline" className="text-xs">Ask AI</Button>
           </Link>
         </div>
       </div>

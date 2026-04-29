@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, CreditCard, Bell, Shield, Users, Webhook, Key, ChevronRight } from "lucide-react";
+import { Building2, CreditCard, Bell, Shield, Users, Webhook, Key, ChevronRight, Smartphone, Mail, Cloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -137,7 +137,7 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl">💳</div>
+                        <div className="rounded-md bg-gray-100 p-2"><CreditCard className="h-4 w-4 text-gray-600" /></div>
                         <div>
                           <p className="text-sm font-medium">Visa ending in 4242</p>
                           <p className="text-xs text-muted-foreground">Expires 12/2027</p>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Integrations</CardTitle>
-                <CardDescription>Connect LETSPACE with payment providers and services</CardDescription>
+                <CardDescription>Connect Cornerstone with payment providers and services</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
@@ -164,36 +164,42 @@ export default function SettingsPage() {
                     name: "M-Pesa (Safaricom Daraja)",
                     desc: "Collect rent and payments via M-Pesa STK Push",
                     status: "connected",
-                    logo: "📱",
+                    logo: "mpesa",
                   },
                   {
                     name: "Paystack",
                     desc: "Card payments for non-M-Pesa tenants",
                     status: "connected",
-                    logo: "💳",
+                    logo: "paystack",
                   },
                   {
                     name: "Africa's Talking",
                     desc: "Bulk SMS notifications and reminders",
                     status: "connected",
-                    logo: "📨",
+                    logo: "sms",
                   },
                   {
                     name: "Resend",
                     desc: "Transactional email for invoices and receipts",
                     status: "connected",
-                    logo: "✉️",
+                    logo: "email",
                   },
                   {
                     name: "Cloudinary",
                     desc: "Property images and document storage",
                     status: "connected",
-                    logo: "☁️",
+                    logo: "cloud",
                   },
                 ].map((integration) => (
                   <div key={integration.name} className="flex items-center justify-between p-4 border rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{integration.logo}</div>
+                      <div className="rounded-md bg-gray-100 p-2">
+                        {integration.logo === "mpesa" && <Smartphone className="h-4 w-4 text-green-600" />}
+                        {integration.logo === "paystack" && <CreditCard className="h-4 w-4 text-blue-600" />}
+                        {integration.logo === "sms" && <Smartphone className="h-4 w-4 text-purple-600" />}
+                        {integration.logo === "email" && <Mail className="h-4 w-4 text-orange-600" />}
+                        {integration.logo === "cloud" && <Cloud className="h-4 w-4 text-sky-600" />}
+                      </div>
                       <div>
                         <p className="text-sm font-semibold">{integration.name}</p>
                         <p className="text-xs text-muted-foreground">{integration.desc}</p>

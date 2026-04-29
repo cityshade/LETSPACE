@@ -284,11 +284,11 @@ export default function LateFeeConfigPage() {
         </div>
         {!splitValid && (
           <p className="text-brick-500 text-sm flex items-center gap-1">
-            ⚠ Total must equal 100%. Currently: {v.agentSplit + v.landlordSplit}%
+            Total must equal 100%. Currently: {v.agentSplit + v.landlordSplit}%
           </p>
         )}
         {splitValid && (
-          <p className="text-green-600 text-sm">✓ Split is valid</p>
+          <p className="text-green-600 text-sm">Split is valid</p>
         )}
       </div>
 

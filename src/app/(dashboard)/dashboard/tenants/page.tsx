@@ -100,7 +100,7 @@ export default function TenantsPage() {
       )}
 
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Active Tenants", value: mockTenants.filter(t => t.status === "ACTIVE").length },
           { label: "Low Risk", value: mockTenants.filter(t => t.riskLevel === "LOW").length },
