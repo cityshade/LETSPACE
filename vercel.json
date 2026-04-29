@@ -1,0 +1,21 @@
+{
+  "framework": "nextjs",
+  "name": "cornerstone",
+  "buildCommand": "npx prisma generate && next build",
+  "env": {
+    "NEXTAUTH_SECRET": "cornerstone-preview-secret",
+    "NEXTAUTH_URL": "https://cornerstone.vercel.app",
+    "DATABASE_URL": "postgresql://placeholder:placeholder@localhost:5432/placeholder",
+    "PAYSTACK_SECRET_KEY": "sk_test_placeholder",
+    "AFRICAS_TALKING_API_KEY": "placeholder",
+    "AFRICAS_TALKING_USERNAME": "sandbox",
+    "AUTOMATION_SECRET": "cornerstone-automation-secret"
+  },
+  "experimentalServices": {
+    "web": {
+      "routePrefix": "/",
+      "framework": "nextjs",
+      "buildCommand": "npm ci && npx prisma generate && npm run build"
+    }
+  }
+}
