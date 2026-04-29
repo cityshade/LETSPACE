@@ -281,11 +281,11 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         `Platform: KES ${split.platformFee.toLocaleString("en-KE")}.`,
       type: "PAYMENT_RECEIVED",
       channel: "IN_APP",
-      metadata: {
+      metadata: JSON.parse(JSON.stringify({
         paymentId: payment.id,
         reference,
         waterfall: waterfall.allocations.map((a) => ({ bucket: a.bucket, applied: a.applied })),
-      },
+      })),
     },
   });
 
@@ -296,14 +296,14 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       action: "PAYMENT_PROCESSED",
       resource: "payment",
       resourceId: payment.id,
-      newValues: {
+      newValues: JSON.parse(JSON.stringify({
         reference,
         amountKES,
         platformFee: split.platformFee,
         agentCommission: split.agentCommission,
         landlordNet: split.landlordNet,
-        waterfall: waterfall.allocations as unknown as Record<string, unknown>[],
-      },
+        waterfall: waterfall.allocations,
+      })),
     },
   });
 }
