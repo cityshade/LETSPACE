@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Home, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Logo } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,27 +15,23 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Auth handled by NextAuth - redirect to dashboard
     setTimeout(() => setLoading(false), 1500);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-soil-50 via-brown-50 to-soil-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
-              <Home className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold">LET<span className="text-blue-600">SPACE</span></span>
+        <div className="flex justify-center mb-8">
+          <Link href="/">
+            <Logo variant="stacked" size="md" />
           </Link>
         </div>
 
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your LETSPACE account</CardDescription>
+            <CardTitle className="text-2xl font-serif">Welcome back</CardTitle>
+            <CardDescription>Sign in to your Cornerstone account</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
@@ -74,7 +71,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-medium text-gray-700">Password</label>
-                  <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
+                  <Link href="/forgot-password" className="text-xs text-soil-600 hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -97,13 +94,13 @@ export default function LoginPage() {
 
               <Button type="submit" className="w-full h-11" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Sign In to LETSPACE
+                Sign In to Cornerstone
               </Button>
             </form>
 
             <p className="text-center text-sm text-gray-600">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-blue-600 font-medium hover:underline">
+              <Link href="/register" className="text-soil-600 font-medium hover:underline">
                 Start free today
               </Link>
             </p>
@@ -112,9 +109,9 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-gray-500 mt-6">
           By signing in, you agree to our{" "}
-          <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link>
+          <Link href="/terms" className="text-soil-600 hover:underline">Terms of Service</Link>
           {" "}and{" "}
-          <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+          <Link href="/privacy" className="text-soil-600 hover:underline">Privacy Policy</Link>
         </p>
       </div>
     </div>
