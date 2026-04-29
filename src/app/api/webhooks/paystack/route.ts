@@ -302,7 +302,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         platformFee: split.platformFee,
         agentCommission: split.agentCommission,
         landlordNet: split.landlordNet,
-        waterfall: waterfall.allocations,
+        waterfall: waterfall.allocations as unknown as Record<string, unknown>[],
       },
     },
   });
