@@ -2,6 +2,12 @@
   "framework": "nextjs",
   "name": "cornerstone",
   "buildCommand": "npx prisma generate && next build",
+  "crons": [
+    { "path": "/api/cron/sms-cadence",       "schedule": "0 8,18 * * *"  },
+    { "path": "/api/cron/late-fees",          "schedule": "0 8 * * *"     },
+    { "path": "/api/cron/deposit-depletion",  "schedule": "1 0 16 * *"    },
+    { "path": "/api/cron/generate-invoices",  "schedule": "0 1 1 * *"     }
+  ],
   "env": {
     "DEMO_MODE": "true",
     "NEXTAUTH_SECRET": "cornerstone-preview-secret-xyz",

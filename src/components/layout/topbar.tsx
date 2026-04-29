@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Search, Menu } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, Menu } from "lucide-react";
+import { HeartbeatIndicator } from "./heartbeat-indicator";
 
 interface TopbarProps {
   title?: string;
@@ -31,21 +31,15 @@ export function Topbar({ title, actions, userName = "User", onMenuClick }: Topba
         )}
       </div>
 
-      {/* Search — tablet+ */}
-      <div className="w-56 hidden md:block">
-        <Input
-          placeholder="Search..."
-          prefix={<Search className="h-3.5 w-3.5" />}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Right actions */}
+      {/* Right */}
       <div className="flex items-center gap-1.5">
         {actions}
 
+        {/* Heartbeat */}
+        <HeartbeatIndicator />
+
         <button className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 transition-colors">
-          <Bell className="h-4.5 w-4.5 h-[18px] w-[18px]" />
+          <Bell className="h-[18px] w-[18px]" />
           <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-brick-500" />
         </button>
 
