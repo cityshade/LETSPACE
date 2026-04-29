@@ -65,7 +65,8 @@ export default function LateFeeConfigPage() {
   const v = watch();
 
   const set = <K extends keyof LateFeeForm>(field: K, val: LateFeeForm[K]) =>
-    setValue(field, val, { shouldDirty: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setValue(field, val as any, { shouldDirty: true });
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
