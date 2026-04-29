@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       organizations: reports.length,
-      totalDepleted: reports.reduce((s, r) => s + r.depleted, 0),
+      totalDepleted: reports.reduce((s, r) => s + r.depleted.length, 0),
       reports,
     });
   } catch (err) {

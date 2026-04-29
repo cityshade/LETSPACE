@@ -58,6 +58,20 @@ const buttonVariants = cva(
 
         // LINK
         link: "text-soil-600 underline-offset-4 hover:underline bg-transparent",
+
+        // M-PESA — green
+        mpesa: [
+          "bg-[#4caf50] text-white shadow-sm",
+          "hover:bg-[#43a047]",
+          "active:bg-[#388e3c]",
+        ].join(" "),
+
+        // SUCCESS — emerald green
+        success: [
+          "bg-emerald-600 text-white shadow-sm",
+          "hover:bg-emerald-500",
+          "active:bg-emerald-700",
+        ].join(" "),
       },
 
       size: {

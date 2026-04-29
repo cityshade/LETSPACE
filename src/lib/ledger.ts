@@ -242,7 +242,7 @@ export const LedgerService = {
       // Note: the hash was built with a tempId, so verify by checking
       // that the stored hash is a valid sha256 hex string (structural check)
       // and that it chains (previousHash matches previous entry's entryHash).
-      const prevEntry = entries.find((e) => e.entryHash === entry.previousHash);
+      const prevEntry = entries.find((e: typeof entries[0]) => e.entryHash === entry.previousHash);
       if (entry.previousHash !== null && !prevEntry) {
         return { valid: false, brokenAt: entry.id, reason: "broken_chain" };
       }

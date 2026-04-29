@@ -230,7 +230,7 @@ export async function getMonthlyRevenueChart(organizationId: string, months = 6)
     ORDER BY month ASC
   `;
 
-  return rows.map((r) => ({
+  return rows.map((r: Record<string, unknown>) => ({
     month: r.month,
     rentCollected: Number(r.rent_collected),
     platformFee: Number(r.platform_fee),

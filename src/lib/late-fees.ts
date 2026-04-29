@@ -370,5 +370,5 @@ export async function depleteDeposits(organizationId: string) {
     }
   }
 
-  return { depleted: depleted.length, errors };
+  return { depleted, errors };
 }

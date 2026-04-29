@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         where: { propertyId: lease.unit.propertyId },
       });
 
-      if (!config?.smsEnabled ?? true) { skipped++; continue; }
+      if (config && config.smsEnabled === false) { skipped++; continue; }
 
       const reminderDays = config?.smsReminderDays ?? [3, 5, 10, 11, 12, 13, 14, 15, 16];
       if (!reminderDays.includes(dayOfMonth)) { skipped++; continue; }
